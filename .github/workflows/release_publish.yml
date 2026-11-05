@@ -61,7 +61,7 @@ jobs:
     # SUBSTITUTION: local copy (the CodeArtifact publish is a no-op), no inherited secrets.
     uses: ./.github/workflows/reusable_publish_python.yml
     permissions:
-      id-token: write
+      contents: read
     with:
         tag: ${{ needs.TagRelease.outputs.tag }}
 
