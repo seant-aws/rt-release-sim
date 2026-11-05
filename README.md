@@ -28,6 +28,7 @@ The first commit imports the files verbatim; the second applies the substitution
 | `reusable_bump.yml` git identity | `EMAIL` and `USER` secrets | the `github-actions[bot]` identity |
 | `reusable_tag_release.yml` checkout and tag push | `CI_TOKEN` | `GITHUB_TOKEN` (the caller grants the job `contents: write`) |
 | `tag-release` / `check-release` expected author | `EMAIL` secret | the `github-actions[bot]` email (the author of the release PR's squash commit) |
+| `tag-release` / `check-release` author comparison | `[[ $AUTHOR != $EXPECTED_AUTHOR ]]` | both sides quoted: the brackets in `github-actions[bot]`'s email are otherwise a glob pattern and never match |
 | `reusable_prerelease.yml` checkout | `CI_TOKEN` | `GITHUB_TOKEN`; the build itself is real |
 | `reusable_release.yml` | AWS credentials, PGP key from Secrets Manager, detached signatures | removed; a step prints each file it would have signed |
 | `reusable_release.yml` `gh release create` | `CI_TOKEN` | `GITHUB_TOKEN`; a real GitHub Release in this repository only (no signatures attached) |
