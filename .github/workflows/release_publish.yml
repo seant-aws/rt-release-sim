@@ -22,8 +22,10 @@ permissions:
 
 jobs:
   TagRelease:
-    uses: OpenJobDescription/.github/.github/workflows/reusable_tag_release.yml@mainline
-    secrets: inherit
+    # SUBSTITUTION: local copy; GITHUB_TOKEN pushes the tag, so the job needs contents: write.
+    uses: ./.github/workflows/reusable_tag_release.yml
+    permissions:
+      contents: write
     with:
       tag: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
 
@@ -36,18 +38,18 @@ jobs:
 
   PreRelease:
       needs: [TagRelease, UnitTests]
-      uses: OpenJobDescription/.github/.github/workflows/reusable_prerelease.yml@mainline
+      # SUBSTITUTION: local copy, no inherited secrets.
+      uses: ./.github/workflows/reusable_prerelease.yml
       permissions:
         id-token: write
         contents: write
-      secrets: inherit
       with:
           tag: ${{ needs.TagRelease.outputs.tag }}
 
   Release:
       needs: [TagRelease, PreRelease]
-      uses: OpenJobDescription/.github/.github/workflows/reusable_release.yml@mainline
-      secrets: inherit
+      # SUBSTITUTION: local copy (signing is a no-op), no inherited secrets.
+      uses: ./.github/workflows/reusable_release.yml
       permissions:
         id-token: write
         contents: write
@@ -56,10 +58,10 @@ jobs:
 
   Publish:
     needs: [TagRelease, Release]
-    uses: OpenJobDescription/.github/.github/workflows/reusable_publish_python.yml@mainline
+    # SUBSTITUTION: local copy (the CodeArtifact publish is a no-op), no inherited secrets.
+    uses: ./.github/workflows/reusable_publish_python.yml
     permissions:
       id-token: write
-    secrets: inherit
     with:
         tag: ${{ needs.TagRelease.outputs.tag }}
 
@@ -70,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      id-token: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -87,5 +89,8 @@ jobs:
       - name: Build
         run: hatch -v build
       # # See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-pypi
+      # SUBSTITUTION: no PyPI upload; prints what would have been uploaded.
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        run: |
+          echo "no-op: would upload to PyPI:"
+          ls -l dist

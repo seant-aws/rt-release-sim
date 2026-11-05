@@ -25,19 +25,22 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.sha }}
           fetch-depth: 0
-          token: ${{ secrets.CI_TOKEN }}
+          # SUBSTITUTION: GITHUB_TOKEN instead of CI_TOKEN.
+          token: ${{ github.token }}
           
       - name: Tag Release
         id: tag-release
-        uses: OpenJobDescription/.github/.github/actions/tag-release@mainline
+        # SUBSTITUTION: local copy of the action; the bot identity instead of the EMAIL and USER secrets.
+        uses: ./.github/actions/tag-release
         with:
           tag: ${{ inputs.tag || '' }}
-          email: ${{ secrets.EMAIL }}
-          username: ${{ secrets.USER }}
+          email: "41898282+github-actions[bot]@users.noreply.github.com"
+          username: "github-actions[bot]"
           
       - name: Check Release
-        uses: OpenJobDescription/.github/.github/actions/check-release@mainline
+        # SUBSTITUTION: local copy of the action; the bot identity instead of the EMAIL secret.
+        uses: ./.github/actions/check-release
         with:
           tag: ${{ steps.tag-release.outputs.tag }}
-          expected_author: ${{ secrets.EMAIL }}
+          expected_author: "41898282+github-actions[bot]@users.noreply.github.com"
           

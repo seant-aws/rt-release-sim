@@ -21,7 +21,8 @@ jobs:
         with:
           ref: refs/tags/${{inputs.tag}}
           fetch-depth: 0
-          token: ${{ secrets.CI_TOKEN }}
+          # SUBSTITUTION: GITHUB_TOKEN instead of CI_TOKEN.
+          token: ${{ github.token }}
 
       - name: Build
         run: |

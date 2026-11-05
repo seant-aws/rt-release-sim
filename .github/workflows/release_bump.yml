@@ -19,10 +19,10 @@ concurrency:
 jobs:
   Bump:
     name: Version Bump
-    uses: OpenJobDescription/.github/.github/workflows/reusable_bump.yml@mainline
+    # SUBSTITUTION: the local copy of OpenJobDescription/.github's reusable_bump.yml (see README).
+    uses: ./.github/workflows/reusable_bump.yml
     permissions:
       contents: write
       pull-requests: write
-    secrets: inherit
     with:
       force_version_bump: ${{ inputs.force_version_bump }}

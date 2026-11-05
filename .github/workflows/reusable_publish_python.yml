@@ -12,18 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      id-token: write
+      contents: read
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
-        with:
-          role-to-assume: ${{ secrets.AWS_CODEBUILD_RELEASE_PUBLISH_ROLE }}
-          aws-region: us-west-2
-          mask-aws-account-id: true
-
+      # SUBSTITUTION: no AWS credentials and no CodeBuild publish; prints what would have run.
       - name: Run CodeBuild
-        uses: aws-actions/aws-codebuild-run-build@7e46c3fa1c1f217e26a73712796b1f78938b534b # v1.0.18
-        with:
-          project-name: ${{ github.event.repository.name }}-release-Publish
-          hide-cloudwatch-logs: true
-          source-version-override: refs/tags/${{inputs.tag}}
+        env:
+          TAG: ${{ inputs.tag }}
+          PROJECT: ${{ github.event.repository.name }}-release-Publish
+        run: echo "no-op: would run CodeBuild project $PROJECT at refs/tags/$TAG"
