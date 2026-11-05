@@ -19,4 +19,5 @@ jobs:
         env:
           TAG: ${{ inputs.tag }}
           PROJECT: ${{ github.event.repository.name }}-release-Publish
-        run: echo "no-op: would run CodeBuild project $PROJECT at refs/tags/$TAG"
+        run: |
+          echo "no-op: would run CodeBuild project $PROJECT at refs/tags/$TAG"
