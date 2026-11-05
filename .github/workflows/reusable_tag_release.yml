@@ -30,16 +30,16 @@ jobs:
           
       - name: Tag Release
         id: tag-release
-        # SUBSTITUTION: local copy of the action; the bot identity instead of the EMAIL and USER secrets.
-        uses: ./.github/actions/tag-release
+        # SUBSTITUTION: this repo's copy of the action (@mainline, as upstream names its own); the bot identity instead of the EMAIL and USER secrets.
+        uses: seant-aws/rt-release-sim/.github/actions/tag-release@mainline
         with:
           tag: ${{ inputs.tag || '' }}
           email: "41898282+github-actions[bot]@users.noreply.github.com"
           username: "github-actions[bot]"
           
       - name: Check Release
-        # SUBSTITUTION: local copy of the action; the bot identity instead of the EMAIL secret.
-        uses: ./.github/actions/check-release
+        # SUBSTITUTION: this repo's copy of the action (@mainline, as upstream names its own); the bot identity instead of the EMAIL secret.
+        uses: seant-aws/rt-release-sim/.github/actions/check-release@mainline
         with:
           tag: ${{ steps.tag-release.outputs.tag }}
           expected_author: "41898282+github-actions[bot]@users.noreply.github.com"
