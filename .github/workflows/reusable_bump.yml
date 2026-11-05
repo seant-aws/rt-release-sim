@@ -1,0 +1,85 @@
+
+name: "Bump"
+
+on:
+  workflow_call:
+    inputs:
+      force_version_bump:
+        required: false
+        default: ""
+        type: string        
+
+jobs:
+  Bump:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: mainline
+          fetch-depth: 0
+          token: ${{ secrets.CI_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.9'
+
+      - name: ConfigureGit
+        run: |
+          git config --local user.email ${{secrets.EMAIL}}
+          git config --local user.name ${{secrets.USER}}
+
+      - name: NextSemver
+        env:
+          FORCE_VERSION_BUMP: ${{ inputs.force_version_bump }}
+        run: |
+          BUMP_ARGS=""
+          if [[ "${FORCE_VERSION_BUMP}" != "" ]]; then
+            BUMP_ARGS="$BUMP_ARGS --${FORCE_VERSION_BUMP}"
+          fi
+
+          # Backup actual changelog to preserve its contents
+          touch CHANGELOG.md
+          cp CHANGELOG.md CHANGELOG.bak.md
+
+           # Install semantic-release from requirements file
+          pip install -r requirements-release.txt
+          
+          # Run semantic-release to generate new changelog
+          NEXT_SEMVER=$(semantic-release -v --strict version --no-commit --no-push --no-tag $BUMP_ARGS)
+
+          echo "NEXT_SEMVER=$NEXT_SEMVER" >> $GITHUB_ENV
+          git checkout -b bump/$NEXT_SEMVER
+
+
+      - name: GenerateChangeLog
+        run: |
+          # Grab the new version's changelog and prepend it to the original changelog contents
+          python .github/scripts/get_latest_changelog.py > NEW_LOG.md
+          cat NEW_LOG.md CHANGELOG.bak.md > CHANGELOG.md
+          rm NEW_LOG.md
+
+          git add CHANGELOG.md
+
+          git commit -sm "chore(release): $NEXT_SEMVER"
+
+          echo "NEXT_SEMVER=$NEXT_SEMVER" >> $GITHUB_ENV
+          {
+            echo 'RELEASE_NOTES<<EOF'
+            python .github/scripts/get_latest_changelog.py
+            echo EOF
+          } >> $GITHUB_ENV
+
+      - name: PushPR
+        env:
+          GH_TOKEN: ${{ secrets.CI_TOKEN }}
+        run: |
+          git push -u origin bump/$NEXT_SEMVER
+
+          # Needs "Allow GitHub Actions to create and approve pull requests" under Settings > Actions
+          gh pr create --base mainline --title "chore(release): $NEXT_SEMVER" --body "$RELEASE_NOTES"

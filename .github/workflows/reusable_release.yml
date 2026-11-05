@@ -1,0 +1,71 @@
+name: "Github Release"
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+
+jobs:
+  Release:
+    runs-on: ubuntu-latest
+    name: Release
+    permissions:
+      id-token: write
+      contents: write
+    environment: release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{inputs.tag}}
+          fetch-depth: 0
+          token: ${{ secrets.CI_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.9'
+
+      - name: Download
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_PGP_KEY_SECRET_ROLE }}
+          aws-region: us-west-2
+          mask-aws-account-id: true
+
+      - name: Import PGP Key
+        run: |
+          export SECRET_STRING="$(aws secretsmanager get-secret-value --secret-id ${{ secrets.AWS_PGP_KEY_SECRET }} --query 'SecretString')"
+          printenv SECRET_STRING | jq -r '. | fromjson | .PrivateKey' | gpg --batch --pinentry-mode loopback --import --armor
+
+          PGP_KEY_PASSPHRASE=$(printenv SECRET_STRING | jq -r '. | fromjson | .Passphrase')
+          echo "::add-mask::$PGP_KEY_PASSPHRASE"
+          echo "PGP_KEY_PASSPHRASE=$PGP_KEY_PASSPHRASE" >> $GITHUB_ENV
+
+      - name: Sign
+        run: |
+          shopt -s nullglob
+          for file in build-artifact/dist/* build-artifact/dist_extras/*; do
+             printenv PGP_KEY_PASSPHRASE | gpg --batch --pinentry-mode loopback --local-user ${{ secrets.PGP_USER }} --passphrase-fd 0 --output $file.sig --detach-sign $file
+             echo "Created signature file for $file"
+          done
+          shopt -u nullglob
+
+      - name: PushRelease
+        env:
+          GH_TOKEN: ${{ secrets.CI_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          RELEASE_NOTES=$(python .github/scripts/get_latest_changelog.py)
+
+          shopt -s nullglob
+          gh release create "$TAG" build-artifact/dist/* build-artifact/dist_extras/* --notes "$RELEASE_NOTES"
+
+
+ 
