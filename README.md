@@ -33,6 +33,7 @@ The first commit imports the files verbatim; the second applies the substitution
 | `reusable_release.yml` `gh release create` | `CI_TOKEN` | `GITHUB_TOKEN`; a real GitHub Release in this repository only (no signatures attached) |
 | `reusable_publish_python.yml` | AWS credentials and a CodeBuild publish to the package repository | a step that prints the CodeBuild project and tag it would have run |
 | `release_publish.yml` PublishToPyPI | `pypa/gh-action-pypi-publish` | the build runs; the upload is a step that lists `dist/` |
+| `reusable_bump.yml`, `reusable_release.yml`, PublishToPyPI | `runs-on: ubuntu-latest` with Python 3.9 | `ubuntu-24.04`: `ubuntu-latest` is Ubuntu 26.04, which has no Python 3.9 for `actions/setup-python` (the upstream jobs fail the same way) |
 | `code_quality.yml` | the 3-OS, 6-Python matrix of the shared build workflow | one Linux job on Python 3.12 running this package's two tests |
 
 The `release` environment exists here without protection rules or secrets, so the jobs that name it run

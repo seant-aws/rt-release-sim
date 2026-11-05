@@ -10,7 +10,8 @@ on:
 
 jobs:
   Release:
-    runs-on: ubuntu-latest
+    # SUBSTITUTION: ubuntu-24.04, since ubuntu-latest (26.04) has no Python 3.9 for setup-python.
+    runs-on: ubuntu-24.04
     name: Release
     permissions:
       contents: write
