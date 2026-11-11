@@ -42,7 +42,7 @@ jobs:
   train:
     if: ${{ vars.RELEASE_TRAIN_ENABLED == 'true' }}
     # This test points at the reusable workflow's draft PR head (a fork branch). RELEASE_TRAIN_MODE is live here.
-    uses: seant-aws/.github/.github/workflows/reusable_release_train.yml@release-train-workflow # zizmor: ignore[unpinned-uses]
+    uses: seant-aws/openjd-dot-github/.github/workflows/reusable_release_train.yml@release-train-workflow # zizmor: ignore[unpinned-uses]
     permissions:
       contents: write # push bot/* branches; create tags and releases (rehearsal only)
       pull-requests: write # open and update the train's PRs and their labels
@@ -50,7 +50,7 @@ jobs:
       id-token: write # OIDC tokens for the AWS role and the gateway
     with:
       mode: ${{ vars.RELEASE_TRAIN_MODE }}
-      tooling_repository: seant-aws/.github
+      tooling_repository: seant-aws/openjd-dot-github
       tooling_ref: release-train-workflow
       # The repositories this one may start after a release (also on the train's own allowlist).
       dispatch_repos: "seant-aws/openjd-cli"
